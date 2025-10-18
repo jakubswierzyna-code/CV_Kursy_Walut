@@ -1,5 +1,68 @@
-Opis paczki kursy walut.
-Paczka DTSX pobiera kursy dla 3 walut ze strony NBP. Dla każdej waluty sprawdzą czy są jakieś dane (patrzę na jeden dzień z historii) i jeśli sa to pobieram dane tylko za poprzedni dzień.
+📘 Dokumentacja pakietu SSIS
+Projekt: kursy_walut.dtsx
+Autor: Jakub Świerzyna
+Utworzono: 13.08.2025
+Technologie: SQL Server Integration Services (SSIS), C#, NBP API, T-SQL
+Środowisko: Microsoft SQL Server 2022, SSIS v16.0
+
+🎯 Cel projektu
+Celem pakietu jest automatyzacja pobierania, przetwarzania i zapisywania kursów walut (EUR, USD, GBP) z publicznego API Narodowego Banku Polskiego (NBP) do bazy danych.
+
+Pakiet integruje dane historyczne oraz dzienne kursy walut, pozwalając na ich analizę i dalsze przetwarzanie w systemach raportowych.
+
+1. Zmiennie użytkownika
+Nazwa zmiennej	        Typ danych	Opis
+czy_jest_EUR	    Int32	      Flaga logiczna określająca, czy dane EUR istnieją
+czy_jest_GBP	    Int32	      Flaga logiczna dla danych GBP
+czy_jest_USD	    Int32	      Flaga logiczna dla danych USD
+DaneEuro	        String	    Bufor tekstowy do przechowywania danych JSON z kursami EUR
+DaneGBP	          String	    Bufor tekstowy dla kursów GBP
+DaneUSD	          String	    Bufor tekstowy dla kursów USD
+
+
+2. Struktura pakietu
+
+Pakiet składa się z dwóch głównych Script Tasków:
+🧩 1. „EUR od początku”
+Pobiera pełną historię kursu EUR z API NBP od 01.01.2020 do dnia poprzedzającego uruchomienie.
+Dane pobierane są partiami co 93 dni (zgodnie z limitem NBP API).
+Skrypt zapisuje dane w formacie JSON w zmiennej User::DaneEuro.
+
+🧩 2. „EUR ostatni dzień”
+Pobiera kurs EUR za poprzedni dzień roboczy.
+Wykorzystuje endpoint:
+https://api.nbp.pl/api/exchangerates/rates/A/EUR/{YYYY-MM-DD}/
+Wynik JSON zapisywany jest również w User::DaneEuro.
+
+🗄️ Logika i przetwarzanie danych
+Po pobraniu dane JSON są zapisywane w tabeli SQL.
+Pakiet jest rozszerzony o kolejne waluty (GBP, USD) poprzez modyfikację URL oraz zmiennych.
+
+⏱️ Harmonogram i automatyzacja
+Pakiet może być uruchamiany:
+Ręcznie z SSMS lub Visual Studio Integration Services,
+Automatycznie poprzez SQL Server Agent Job, np.:
+Zadanie 1 – codziennie o 8:00 (kurs dzienny),
+Zadanie 2 – raz w miesiącu (aktualizacja pełnych danych).
+
+📊 Wynik działania
+Dane kursów walut są zaktualizowane w bazie.
+Dostępne są w raportach BI, dashboardach lub modelach analitycznych.
+System zapewnia historyczne i bieżące wartości kursów NBP.
+
+🚀 Korzyści i zastosowanie
+Pełna automatyzacja procesu ETL kursów walut.
+Dane zawsze aktualne i wiarygodne.
+Łatwość rozszerzenia o kolejne waluty lub źródła.
+Możliwość integracji z raportami Power BI lub hurtownią danych.
+
+📈 Propozycje rozwoju
+Logowanie błędów w dedykowanej tabeli (np. etl.LogiPobrania).
+Parametryzacja dat początkowych i końcowych.
+Dodanie powiadomień mailowych o sukcesie/błędach.
+
+Opis skrócony paczki kursy walut.
+Paczka DTSX pobiera kursy dla 3 walut ze strony NBP. Dla każdej waluty sprawdzą czy są jakieś dane (patrzę na jeden dzień z historii) i jeśli są to pobieram dane tylko za poprzedni dzień.
 Każdą z trzech walut pobieram osobno - wybrałem ten sposób ponieważ poprzez api nbp nie można wybrać trzech walut naraz.
 Dla każdej waluty tworzę dwie zmienne: 
 1) czy_jest_? mówi o tym czy są już dane dla waluty,
